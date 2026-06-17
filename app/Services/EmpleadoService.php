@@ -65,16 +65,17 @@ class EmpleadoService
     public function eliminar(Empleado $empleado): bool
     {
         return DB::transaction(function () use ($empleado) {
-
-            if ($empleado->historialNominas()->exists()) {
-                $this->empleadoRepository->actualizar($empleado, [
-                    'activo' => false,
+            if (! $empleado->activo) {
+                throw ValidationException::withMessages([
+                    'empleado' => 'El empleado ya se encuentra desactivado.',
                 ]);
-
-                return true;
             }
 
-            //return $this->empleadoRepository->eliminar($empleado);
+            $this->empleadoRepository->actualizar($empleado, [
+                'activo' => false,
+            ]);
+
+            return true;
         });
     }
 }

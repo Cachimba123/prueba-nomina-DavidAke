@@ -92,7 +92,7 @@ class EmpleadoController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Empleado eliminado o desactivado correctamente.',
+            'message' => 'Empleado desactivado correctamente.',
         ]);
     }
 }
