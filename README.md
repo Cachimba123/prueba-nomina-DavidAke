@@ -8,6 +8,7 @@ Proyecto Laravel para administrar empleados, departamentos y cálculos de nómin
 - Composer
 - Node.js y npm
 - PostgreSQL
+- Docker y Docker Compose, si se prefiere ejecutar el entorno local en contenedores
 - Extensiones PHP requeridas por Laravel 12
 
 ## Instalación local
@@ -83,6 +84,98 @@ Si se necesita compilar assets:
 ```bash
 npm run dev
 ```
+
+## Instalación local con Docker
+
+El proyecto incluye una configuración Docker para levantar la API, Nginx y PostgreSQL sin instalar PHP o PostgreSQL directamente en la máquina.
+
+Archivos principales:
+
+- `docker-compose.local.yml`: entorno local.
+- `docker/php/Dockerfile.local`: imagen PHP-FPM para desarrollo local.
+- `docker/nginx/local.conf`: configuración Nginx local.
+- `.env.local`: variables usadas por los contenedores locales.
+
+1. Construir y levantar los contenedores:
+
+```bash
+docker compose -f docker-compose.local.yml up -d --build
+```
+
+2. Instalar dependencias dentro del contenedor de la aplicación:
+
+```bash
+docker compose -f docker-compose.local.yml exec app composer install
+```
+
+3. Generar la llave de Laravel si fuera necesario:
+
+```bash
+docker compose -f docker-compose.local.yml exec app php artisan key:generate
+```
+
+4. Ejecutar migraciones y seeders:
+
+```bash
+docker compose -f docker-compose.local.yml exec app php artisan migrate --seed
+```
+
+5. Consultar la API:
+
+```text
+http://127.0.0.1:8000/api
+```
+
+El servicio local usa estos contenedores:
+
+- `nomina_app_local`: aplicación Laravel con PHP-FPM.
+- `nomina_nginx_local`: servidor web Nginx expuesto en el puerto `8000`.
+- `nomina_postgres_local`: base de datos PostgreSQL expuesta en el puerto `5433`.
+
+La conexión interna de Laravel a base de datos se configura en `.env.local`:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=nomina_prueba
+DB_USERNAME=nomina_user
+DB_PASSWORD=nomina_password
+```
+
+Comandos útiles:
+
+```bash
+docker compose -f docker-compose.local.yml ps
+docker compose -f docker-compose.local.yml logs -f
+docker compose -f docker-compose.local.yml exec app php artisan test
+docker compose -f docker-compose.local.yml down
+```
+
+Si se quiere reiniciar también la base de datos y los volúmenes:
+
+```bash
+docker compose -f docker-compose.local.yml down -v
+```
+
+## Docker para producción
+
+También existe una base para producción:
+
+- `docker-compose.prod.yml`
+- `docker/php/Dockerfile.prod`
+- `docker/nginx/prod.conf`
+- `.env.prod`
+
+La intención de esta configuración es separar una imagen optimizada sin dependencias de desarrollo y servir la API con Nginx + PHP-FPM. Antes de usarla en un ambiente real se debe revisar y probar con más cuidado:
+
+- Generar un `APP_KEY` real.
+- Configurar dominio o IP final en `APP_URL` y `SANCTUM_STATEFUL_DOMAINS`.
+- Cambiar credenciales de PostgreSQL.
+- Revisar permisos de `storage` y `bootstrap/cache`.
+- Validar que las migraciones, seeders necesarios y cachés de Laravel funcionen correctamente.
+- Ajustar `docker-compose.prod.yml`, porque actualmente espera `.env.production`, mientras el archivo incluido en el repositorio es `.env.prod`.
+- Probar build, arranque, logs, conectividad y comportamiento de la API dentro del contenedor.
 
 ## Usuarios de prueba
 
@@ -779,5 +872,7 @@ Con más tiempo se agregaría una capa visual para operar el sistema desde una i
 También se estandarizarían mejor las conexiones externas de la API usando protocolos más robustos para integraciones, por ejemplo OAuth.
 
 Otra mejora sería agregar cron jobs para ejecutar o validar cortes de nómina puntualmente cada quincena, siempre que la lógica de negocio quede confirmada para automatizar esos cortes.
+
+De haber tenido más tiempo, también habría mejorado y probado con mayor profundidad la imagen y el contenedor de producción. La configuración base ya existe, pero faltaría validar el build final, variables de entorno, permisos, logs, conectividad con la base de datos, ejecución de migraciones, seguridad de credenciales y comportamiento real de la API en un ambiente productivo.
 
 Finalmente, se podría aplicar un patrón tipo Factory o una arquitectura más extensible para aislar mejor la creación de usuarios, tipos de contrato, restricciones, deducciones y percepciones. Esto haría el sistema más escalable y menos acoplado al agregar nuevas reglas.
