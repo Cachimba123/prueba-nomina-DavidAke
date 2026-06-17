@@ -16,10 +16,15 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\EmpleadoRepository::class
         );
 
-       /*  $this->app->bind(
+       $this->app->bind(
             \App\Interfaces\DepartamentoRepositoryInterface::class,
             \App\Repositories\DepartamentoRepository::class
-        ); */
+        ); 
+
+        $this->app->bind(
+            \App\Interfaces\NominaMetricasRepositoryInterface::class,
+            \App\Repositories\NominaMetricasRepository::class
+        );
 
         $this->app->bind(
             \App\Interfaces\HistorialNominaRepositoryInterface::class,

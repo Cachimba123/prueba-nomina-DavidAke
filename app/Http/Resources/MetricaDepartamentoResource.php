@@ -10,11 +10,34 @@ class MetricaDepartamentoResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'departamento_id' => $this['departamento_id'],
-            'nombre_departamento' => $this['nombre_departamento'],
-            'empleados_count' => $this['empleados_count'],
-            'salario_promedio' => round($this['salario_promedio'], 2),
-            'salario_total' => round($this['salario_total'], 2),
+            'departamento' => $this['departamento'],
+
+            'total_empleados_activos' => $this['total_empleados_activos'],
+
+            'total_empleados_con_nomina' => $this['total_empleados_con_nomina'],
+
+            'suma_total_percepciones' => number_format(
+                (float) $this['suma_total_percepciones'],
+                2,
+                '.',
+                ''
+            ),
+
+            'suma_total_deducciones' => number_format(
+                (float) $this['suma_total_deducciones'],
+                2,
+                '.',
+                ''
+            ),
+
+            'suma_total_neto_a_pagar' => number_format(
+                (float) $this['suma_total_neto_a_pagar'],
+                2,
+                '.',
+                ''
+            ),
+
+            'empleado_mayor_salario_neto' => $this['empleado_mayor_salario_neto'],
         ];
     }
 }
