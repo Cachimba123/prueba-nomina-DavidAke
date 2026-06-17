@@ -17,5 +17,6 @@ interface EmpleadoRepositoryInterface
     public function eliminar(Empleado $empleado): bool;
 
     public function existeRfc(string $rfc, ?int $ignorarEmpleadoId = null): bool;
+    
     public function buscarActivoParaCalculoConBloqueo(int $id): ?Empleado;
 }

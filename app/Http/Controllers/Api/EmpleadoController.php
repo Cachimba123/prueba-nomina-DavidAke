@@ -95,4 +95,17 @@ class EmpleadoController extends Controller
             'message' => 'Empleado desactivado correctamente.',
         ]);
     }
+
+    public function reactivar(Empleado $empleado): JsonResponse
+    {
+        $this->authorize('update', $empleado);
+
+        $empleado = $this->empleadoService->reactivar($empleado);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Empleado reactivado correctamente.',
+            'data' => new EmpleadoResource($empleado),
+        ]);
+    }
 }

@@ -10,9 +10,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-
+    Route::patch('empleados/{empleado}/reactivar', [EmpleadoController::class, 'reactivar']);
     Route::apiResource('empleados', EmpleadoController::class);
-
     Route::post('nomina/calcular', [NominaController::class, 'calcular']);
 
     Route::get('nomina/historial', [NominaController::class, 'historial']);

@@ -40,6 +40,21 @@ class EmpleadoService
         });
     }
 
+    public function reactivar(Empleado $empleado): Empleado
+    {
+        return DB::transaction(function () use ($empleado) {
+            if ($empleado->activo) {
+                throw ValidationException::withMessages([
+                    'empleado' => 'El empleado ya se encuentra activo.',
+                ]);
+            }
+
+            return $this->empleadoRepository->actualizar($empleado, [
+                'activo' => true,
+            ]);
+        });
+    }
+
     /**
      * @throws Throwable
      */
