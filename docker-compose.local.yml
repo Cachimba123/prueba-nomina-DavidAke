@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.local
+    container_name: nomina_app_local
+    restart: unless-stopped
+    working_dir: /var/www/html
+    env_file:
+      - .env.local
+    volumes:
+      - .:/var/www/html
+      - nomina_vendor_local:/var/www/html/vendor
+    depends_on:
+      - postgres
+    networks:
+      - nomina_network_local
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nomina_nginx_local
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - nomina_vendor_local:/var/www/html/vendor
+      - ./docker/nginx/local.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - nomina_network_local
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nomina_postgres_local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nomina_prueba
+      POSTGRES_USER: nomina_user
+      POSTGRES_PASSWORD: nomina_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - nomina_postgres_data_local:/var/lib/postgresql/data
+    networks:
+      - nomina_network_local
+
+volumes:
+  nomina_postgres_data_local:
+  nomina_vendor_local:
+
+networks:
+  nomina_network_local:
+    driver: bridge

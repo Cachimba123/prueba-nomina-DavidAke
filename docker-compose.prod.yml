@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    container_name: nomina_app_prod
+    restart: unless-stopped
+    working_dir: /var/www/html
+    env_file:
+      - .env.production
+    depends_on:
+      - postgres
+    networks:
+      - nomina_network_prod
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nomina_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - nomina_network_prod
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nomina_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nomina_prueba}
+      POSTGRES_USER: ${POSTGRES_USER:-nomina_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nomina_password}
+    volumes:
+      - nomina_postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - nomina_network_prod
+
+volumes:
+  nomina_postgres_data_prod:
+
+networks:
+  nomina_network_prod:
+    driver: bridge
