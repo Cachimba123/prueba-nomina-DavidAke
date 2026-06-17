@@ -2,23 +2,27 @@
 
 namespace Database\Factories;
 
-use App\Models\Departamento;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Departamento>
- */
 class DepartamentoFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            //
+            'clave_departamento' => strtoupper($this->faker->unique()->bothify('DEP-###')),
+            'nombre_departamento' => $this->faker->unique()->randomElement([
+                'Tesorería',
+                'Catastro',
+                'DIF',
+                'Recursos Humanos',
+                'Sistemas',
+                'Obras Públicas',
+                'Desarrollo Urbano',
+                'Contabilidad',
+                'Jurídico',
+                'Presidencia',
+            ]),
+            'activo' => true,
         ];
     }
 }
