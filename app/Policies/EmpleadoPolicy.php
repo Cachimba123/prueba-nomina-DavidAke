@@ -3,64 +3,52 @@
 namespace App\Policies;
 
 use App\Models\Empleado;
-use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Usuario;
 
 class EmpleadoPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    public function viewAny(Usuario $usuario): bool
     {
-        return false;
+        return in_array($usuario->rol, [
+            'admin',
+            'recursos_humanos',
+            'nomina',
+            'consulta',
+            'sistema_externo',
+        ]);
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Empleado $empleado): bool
+    public function view(Usuario $usuario, Empleado $empleado): bool
     {
-        return false;
+        if (in_array($usuario->rol, [
+            'admin',
+            'recursos_humanos',
+            'nomina',
+        ])) {
+            return true;
+        }
+
+        return $usuario->empleado_id === $empleado->id;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(Usuario $usuario): bool
     {
-        return false;
+        return in_array($usuario->rol, [
+            'admin',
+            'recursos_humanos',
+        ]);
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Empleado $empleado): bool
+    public function update(Usuario $usuario, Empleado $empleado): bool
     {
-        return false;
+        return in_array($usuario->rol, [
+            'admin',
+            'recursos_humanos',
+        ]);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Empleado $empleado): bool
+    public function delete(Usuario $usuario, Empleado $empleado): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Empleado $empleado): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Empleado $empleado): bool
-    {
-        return false;
+        return $usuario->rol === 'admin';
     }
 }
