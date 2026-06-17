@@ -30,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\HistorialNominaRepositoryInterface::class,
             \App\Repositories\HistorialNominaRepository::class
         );
+
+        $this->app->bind(
+            \App\Interfaces\HistorialNominaRepositoryInterface::class,
+            \App\Repositories\HistorialNominaRepository::class
+        );
     }
 
     /**

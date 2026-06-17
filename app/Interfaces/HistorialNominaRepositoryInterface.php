@@ -3,6 +3,7 @@
 namespace App\Interfaces;
 
 use App\Models\HistorialNomina;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface HistorialNominaRepositoryInterface
 {
@@ -13,4 +14,9 @@ interface HistorialNominaRepositoryInterface
         int $anio,
         int $quincena
     ): bool;
+
+    public function paginarPorPeriodo(
+        array $periodo,
+        array $filtros = []
+    ): LengthAwarePaginator;
 }
