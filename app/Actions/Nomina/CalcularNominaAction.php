@@ -2,59 +2,85 @@
 
 namespace App\Actions\Nomina;
 
-use App\Models\Empleado;
+use App\Interfaces\EmpleadoRepositoryInterface;
+use App\Interfaces\HistorialNominaRepositoryInterface;
 use App\Models\HistorialNomina;
+use App\Models\Usuario;
+use App\Services\NominaCalculoService;
+use App\Services\NominaPeriodoService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CalcularNominaAction
 {
-    public function execute(
-        Empleado $empleado,
-        string $periodoDe,
-        string $periodoHasta,
-        array $adicionales = [],
-        array $deducciones = []
-    ): HistorialNomina {
-        // Calcular salario bruto
-        $diasPeriodo = $this->calcularDiasPeriodo($periodoDe, $periodoHasta);
-        $salarioBruto = $this->calcularSalarioBruto($empleado->salario_base, $diasPeriodo);
-
-        // Sumar adicionales
-        $totalAdicionales = array_sum($adicionales);
-
-        // Sumar deducciones
-        $totalDeducciones = array_sum($deducciones);
-
-        // Calcular neto
-        $salarioNeto = $salarioBruto + $totalAdicionales - $totalDeducciones;
-
-        // Crear registro en historial
-        return HistorialNomina::create([
-            'empleado_id' => $empleado->id,
-            'periodo_de' => $periodoDe,
-            'periodo_hasta' => $periodoHasta,
-            'salario_bruto' => $salarioBruto,
-            'adicionales' => $totalAdicionales,
-            'deducciones' => $totalDeducciones,
-            'salario_neto' => $salarioNeto,
-            'metadatos' => json_encode([
-                'dias_periodo' => $diasPeriodo,
-                'adicionales_detalle' => $adicionales,
-                'deducciones_detalle' => $deducciones,
-            ]),
-        ]);
+    public function __construct(
+        private readonly EmpleadoRepositoryInterface $empleadoRepository,
+        private readonly HistorialNominaRepositoryInterface $historialNominaRepository,
+        private readonly NominaPeriodoService $nominaPeriodoService,
+        private readonly NominaCalculoService $nominaCalculoService,
+    ) {
     }
 
-    private function calcularDiasPeriodo(string $periodoDe, string $periodoHasta): int
+    public function ejecutar(array $data, Usuario $usuario): HistorialNomina
     {
-        $fecha1 = new \DateTime($periodoDe);
-        $fecha2 = new \DateTime($periodoHasta);
+        return DB::transaction(function () use ($data, $usuario) {
+            $empleado = $this->empleadoRepository
+                ->buscarActivoParaCalculoConBloqueo($data['empleado_id']);
 
-        return $fecha2->diff($fecha1)->days + 1;
-    }
+            if (! $empleado) {
+                throw ValidationException::withMessages([
+                    'empleado_id' => 'El empleado no existe o se encuentra inactivo.',
+                ]);
+            }
 
-    private function calcularSalarioBruto(float $salarioBase, int $diasPeriodo): float
-    {
-        $diasMes = 30;
-        return ($salarioBase / $diasMes) * $diasPeriodo;
+            $periodo = $this->nominaPeriodoService->obtenerPeriodo(
+                $data['fecha_referencia'] ?? null
+            );
+
+            $yaExisteNomina = $this->historialNominaRepository
+                ->existePorEmpleadoPeriodo(
+                    $empleado->id,
+                    $periodo['anio'],
+                    $periodo['quincena']
+                );
+
+            if ($yaExisteNomina) {
+                throw ValidationException::withMessages([
+                    'periodo' => 'Ya existe un cálculo de nómina para este empleado en la quincena indicada.',
+                ]);
+            }
+
+            $calculo = $this->nominaCalculoService->calcular(
+                $empleado,
+                $data
+            );
+
+            return $this->historialNominaRepository->crear([
+                'empleado_id' => $empleado->id,
+                'departamento_id' => $empleado->departamento_id,
+                'calculado_por_usuario_id' => $usuario->id,
+
+ 
+                'empleado_rfc' => $empleado->rfc,
+                'empleado_nombre_completo' => $empleado->nombre_completo,
+                'empleado_puesto' => $empleado->puesto,
+                'salario_base' => $empleado->salario_base,
+
+                'anio' => $periodo['anio'],
+                'quincena' => $periodo['quincena'],
+                'periodo_inicio' => $periodo['periodo_inicio'],
+                'periodo_fin' => $periodo['periodo_fin'],
+
+ 
+                'percepciones' => $calculo['percepciones'],
+                'deducciones' => $calculo['deducciones'],
+
+                'total_percepciones' => $calculo['total_percepciones'],
+                'total_deducciones' => $calculo['total_deducciones'],
+                'neto_a_pagar' => $calculo['neto_a_pagar'],
+
+                'calculado_en' => now(),
+            ]);
+        });
     }
 }

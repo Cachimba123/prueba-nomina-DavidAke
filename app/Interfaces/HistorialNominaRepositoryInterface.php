@@ -2,21 +2,15 @@
 
 namespace App\Interfaces;
 
+use App\Models\HistorialNomina;
+
 interface HistorialNominaRepositoryInterface
 {
-    public function all();
+    public function crear(array $data): HistorialNomina;
 
-    public function find($id);
-
-    public function create(array $data);
-
-    public function update($id, array $data);
-
-    public function delete($id);
-
-    public function findByEmpleado(int $empleadoId);
-
-    public function findByPeriodo(string $periodoDe, string $periodoHasta);
-
-    public function findByDepartamento(int $departamentoId);
+    public function existePorEmpleadoPeriodo(
+        int $empleadoId,
+        int $anio,
+        int $quincena
+    ): bool;
 }

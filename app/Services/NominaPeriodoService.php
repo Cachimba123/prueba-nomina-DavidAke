@@ -2,41 +2,36 @@
 
 namespace App\Services;
 
-use App\Interfaces\HistorialNominaRepositoryInterface;
+use Carbon\Carbon;
 
 class NominaPeriodoService
 {
-    public function __construct(
-        private HistorialNominaRepositoryInterface $historialNominaRepository
-    ) {}
-
-    public function obtenerNominasPorEmpleado(int $empleadoId)
+    public function obtenerPeriodo(?string $fechaReferencia = null): array
     {
-        return $this->historialNominaRepository->findByEmpleado($empleadoId);
-    }
+        $fecha = $fechaReferencia
+            ? Carbon::parse($fechaReferencia)
+            : now();
 
-    public function obtenerNominasPorPeriodo(string $periodoDe, string $periodoHasta)
-    {
-        return $this->historialNominaRepository->findByPeriodo($periodoDe, $periodoHasta);
-    }
+        $anio = $fecha->year;
+        $mes = $fecha->month;
 
-    public function obtenerNominasPorDepartamento(int $departamentoId)
-    {
-        return $this->historialNominaRepository->findByDepartamento($departamentoId);
-    }
+        $esPrimeraQuincena = $fecha->day <= 15;
 
-    public function crearNomina(array $data)
-    {
-        return $this->historialNominaRepository->create($data);
-    }
+        $periodoInicio = $esPrimeraQuincena
+            ? $fecha->copy()->startOfMonth()
+            : $fecha->copy()->day(16);
 
-    public function actualizarNomina(int $id, array $data)
-    {
-        return $this->historialNominaRepository->update($id, $data);
-    }
+        $periodoFin = $esPrimeraQuincena
+            ? $fecha->copy()->day(15)
+            : $fecha->copy()->endOfMonth();
 
-    public function eliminarNomina(int $id)
-    {
-        return $this->historialNominaRepository->delete($id);
+        $quincena = (($mes - 1) * 2) + ($esPrimeraQuincena ? 1 : 2);
+
+        return [
+            'anio' => $anio,
+            'quincena' => $quincena,
+            'periodo_inicio' => $periodoInicio->toDateString(),
+            'periodo_fin' => $periodoFin->toDateString(),
+        ];
     }
 }

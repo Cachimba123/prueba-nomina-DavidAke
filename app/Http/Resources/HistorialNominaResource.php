@@ -11,16 +11,49 @@ class HistorialNominaResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'empleado_id' => $this->empleado_id,
-            'periodo_de' => $this->periodo_de,
-            'periodo_hasta' => $this->periodo_hasta,
-            'salario_bruto' => $this->salario_bruto,
-            'adicionales' => $this->adicionales,
-            'deducciones' => $this->deducciones,
-            'salario_neto' => $this->salario_neto,
-            'metadatos' => json_decode($this->metadatos, true),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+
+            'empleado' => [
+                'id' => $this->empleado_id,
+                'nombre' => $this->empleado_nombre_completo,
+                'rfc' => $this->empleado_rfc,
+                'puesto' => $this->empleado_puesto,
+            ],
+
+            'departamento' => [
+                'id' => $this->departamento?->id,
+                'nombre' => $this->departamento?->nombre_departamento,
+            ],
+
+            'periodo' => [
+                'anio' => $this->anio,
+                'quincena' => $this->quincena,
+                'inicio' => $this->periodo_inicio?->toDateString(),
+                'fin' => $this->periodo_fin?->toDateString(),
+            ],
+
+            'percepciones' => [
+                'salario_base' => $this->percepciones['salario_base_quincenal'] ?? null,
+                'salario_base_mensual' => $this->percepciones['salario_base_mensual'] ?? null,
+                'horas_extra' => $this->percepciones['horas_extra'] ?? null,
+                'bono_puntualidad' => $this->percepciones['bono_puntualidad'] ?? null,
+                'total' => $this->total_percepciones,
+            ],
+
+            'deducciones' => [
+                'imss' => $this->deducciones['imss'] ?? null,
+                'isr' => $this->deducciones['isr'] ?? null,
+                'total' => $this->total_deducciones,
+            ],
+
+            'neto_a_pagar' => $this->neto_a_pagar,
+
+            'calculado_por' => [
+                'id' => $this->calculadoPor?->id,
+                'nombre' => $this->calculadoPor?->nombre_completo,
+                'correo' => $this->calculadoPor?->correo,
+            ],
+
+            'calculado_en' => $this->calculado_en?->toDateTimeString(),
         ];
     }
 }

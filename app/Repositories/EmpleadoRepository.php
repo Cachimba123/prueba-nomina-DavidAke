@@ -72,4 +72,14 @@ class EmpleadoRepository implements EmpleadoRepositoryInterface
             })
             ->exists();
     }
+
+    public function buscarActivoParaCalculoConBloqueo(int $id): ?Empleado
+    {
+        return Empleado::query()
+            ->with('departamento')
+            ->whereKey($id)
+            ->where('activo', true)
+            ->lockForUpdate()
+            ->first();
+    }
 }
